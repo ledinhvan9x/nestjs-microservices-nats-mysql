@@ -18,6 +18,10 @@ services:
     volumes:
       - ./payments-microservice/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    restart: unless-stopped
   nats:
     image: nats
     ports:
@@ -31,3 +35,9 @@ services:
       - MYSQL_DATABASE=nestjs_db
       - MYSQL_USER=testuser
       - MYSQL_PASSWORD=testuser123
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
