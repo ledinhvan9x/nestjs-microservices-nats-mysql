@@ -8,16 +8,31 @@ services:
     command: npm run start:dev
     environment:
       - PORT=3000
+    depends_on:
+      nats:
+        condition: service_started
   users_microservice:
     build: ./users-microservice
     volumes:
       - ./users-microservice/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      nats:
+        condition: service_started
+      mysql_db:
+        condition: service_healthy
+    restart: unless-stopped
   payments_microservice:
     build: ./payments-microservice
     volumes:
       - ./payments-microservice/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      nats:
+        condition: service_started
+      mysql_db:
+        condition: service_healthy
+    restart: unless-stopped
   nats:
     image: nats
     ports:
@@ -31,3 +46,9 @@ services:
       - MYSQL_DATABASE=nestjs_db
       - MYSQL_USER=testuser
       - MYSQL_PASSWORD=testuser123
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
